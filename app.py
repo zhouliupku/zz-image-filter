@@ -11,6 +11,7 @@ import os
 from PIL import Image, ImageTk
 
 from .common import config
+from .filters.point_filters import polarize_filter
 
 class App:
     def __init__(self, window, window_title):
@@ -24,35 +25,54 @@ class App:
         title = tk.Label(text="Filter Project", font=config.TITLE_FONT)
         title.grid(row=0, column=0, columnspan=3)
 
-        apply_filter_button = tk.Button(text="Apply", bg="white")
-        apply_filter_button.grid(row=1, column=1)
-        
         #TODO: put into config
         root_path = os.path.dirname(os.path.abspath(__file__))
         img_path = os.path.join(root_path, "resources", "image", "orig")
-        orig_img = cv2.imread(os.path.join(img_path, "pku.jpg"))
-        height, width, no_channels = orig_img.shape
+        self.orig_img = cv2.imread(os.path.join(img_path, "pku.jpg"),
+                              cv2.IMREAD_GRAYSCALE)
+        self.out_img = self.orig_img
+        print(self.orig_img)
         
-        #TODO: modularize
-        orig_img_canvas = tk.Canvas(window, width=width, height=height)
-        orig_img_canvas.grid(row=1, column=0)
-        orig_img_photo = ImageTk.PhotoImage(master=orig_img_canvas,
-                                            image=Image.fromarray(orig_img))
-        orig_img_canvas.create_image(0, 0, image=orig_img_photo, anchor=tk.NW)
+        height, width = self.orig_img.shape
+        self.orig_canvas = tk.Canvas(window, width=width, height=height)
+        self.orig_canvas.grid(row=1, column=0)
+        self.orig_photo = ImageTk.PhotoImage(master=self.orig_canvas,
+                                             image=Image.fromarray(self.orig_img))
+        self.orig_canvas.create_image(0, 0, 
+                                      image=self.orig_photo,
+                                      anchor=tk.NW)
         
-        #TODO: apply filter
-        out_img = orig_img
-        out_img_canvas = tk.Canvas(window, width=width, height=height)
-        out_img_canvas.grid(row=1, column=2)
-        out_img_photo = ImageTk.PhotoImage(master=out_img_canvas,
-                                            image=Image.fromarray(out_img))
-        out_img_canvas.create_image(0, 0, image=out_img_photo, anchor=tk.NW)
+        self.out_canvas = tk.Canvas(window, width=width, height=height)
+        self.out_canvas.grid(row=1, column=2)
+        self.out_photo = ImageTk.PhotoImage(master=self.out_canvas,
+                                            image=Image.fromarray(self.out_img))
+        self.out_img_on_canvas = self.out_canvas.create_image(0, 0, 
+                                          image=self.out_photo,
+                                          anchor=tk.NW)
         
+        apply_filter_button = tk.Button(text="Apply", bg="white",
+                                        command=lambda:self.apply(polarize_filter))
+        apply_filter_button.grid(row=1, column=1)
+        
+        # Saving
         save_button = tk.Button(text="Save", bg="white",
-                                command=lambda:self.save(out_img))
+                                command=lambda:self.save(self.out_img))
         save_button.grid(row=2, column=0, columnspan=3)
         
+        # Start main loop
         self.window.mainloop()
+        
+    def apply(self, point_filter):
+        """
+        Apply filter pointwise to self.orig_img, set and display self.out_img
+        point_filter: the filter to be applied
+        """
+        #TODO: ensure value between 0 and 255
+        self.out_img = point_filter(self.orig_img)
+        print(self.out_img)
+        self.out_photo = ImageTk.PhotoImage(master=self.out_canvas,
+                                            image=Image.fromarray(self.out_img))
+        self.out_canvas.itemconfig(self.out_img_on_canvas, image = self.out_photo)
         
     def save(self, img):
         """

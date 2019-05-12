@@ -18,17 +18,19 @@ class App:
         """
         Initialize app window and start main loop
         """
+        #TODO: put into config
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        img_path = os.path.join(root_path, "resources", "image")
+        
         self.window = window
         self.window.title(window_title)
         self.window.geometry("600x350")
+        self.window.wm_iconbitmap(os.path.join(img_path, "zz.ico"))
         
         title = tk.Label(text="Filter Project", font=config.TITLE_FONT)
         title.grid(row=0, column=0, columnspan=3)
 
-        #TODO: put into config
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        img_path = os.path.join(root_path, "resources", "image", "orig")
-        self.orig_img = cv2.imread(os.path.join(img_path, "pku.jpg"),
+        self.orig_img = cv2.imread(os.path.join(img_path, "orig", "pku.jpg"),
                               cv2.IMREAD_GRAYSCALE)
         self.out_img = self.orig_img
         print(self.orig_img)

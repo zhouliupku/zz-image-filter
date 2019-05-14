@@ -11,7 +11,7 @@ import os
 from PIL import Image, ImageTk
 
 from .common import config
-from .filters.point_filters import PolarizeFilter
+from .filters.point_filters import PolarizeFilter, WhitenFilter
 
 class App:
     def __init__(self, window, window_title):
@@ -61,13 +61,23 @@ class App:
         # Button to apply filter and update output image
         f = PolarizeFilter()
         apply_filter_button = tk.Button(text="Apply", bg="white",
-                                        command=lambda:self.apply(f))
+                                        command=lambda:self.apply(self.filter_dict[self.filter_in_use.get()]))
         apply_filter_button.grid(row=1, column=1)
+        
+        # Drop down for filter selection
+        self.filter_dict = {"polar": PolarizeFilter(),
+                            "whiten": WhitenFilter()}
+        self.filter_name_list = sorted(list(self.filter_dict.keys()))
+        self.filter_in_use = tk.StringVar(self.window)
+        self.filter_in_use.set(self.filter_name_list[0]) # default value
+        dd = tk.OptionMenu(self.window, self.filter_in_use,
+                           *(self.filter_name_list))
+        dd.grid(row=2, column=0, columnspan=3)
         
         # Saving
         save_button = tk.Button(text="Save", bg="white",
                                 command=lambda:self.save(self.out_img))
-        save_button.grid(row=2, column=0, columnspan=3)
+        save_button.grid(row=3, column=0, columnspan=3)
         
         # Start main loop
         self.window.mainloop()
@@ -106,7 +116,7 @@ class App:
         """
         save_message = "Image has been saved to {}".format(filename)
         save_display = tk.Text(master=self.window, height=3, width=50)
-        save_display.grid(row=3, column=0, columnspan=3)
+        save_display.grid(row=4, column=0, columnspan=3)
         save_display.insert(tk.END, save_message)
         
         

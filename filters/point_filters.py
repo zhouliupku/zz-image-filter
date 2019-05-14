@@ -49,4 +49,7 @@ class PolarizeFilter(PointFilter):
 class WhitenFilter(PointFilter):
     def apply_pointwise(self, x):
         return x + 77
-    
+
+class DarkenFilter(PointFilter):
+    def apply_pointwise(self, x):
+        return x - 77   

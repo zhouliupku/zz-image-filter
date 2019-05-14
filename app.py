@@ -11,7 +11,7 @@ import os
 from PIL import Image, ImageTk
 
 from .common import config
-from .filters.point_filters import PolarizeFilter, WhitenFilter
+from . import filters
 
 class App:
     def __init__(self, window, window_title):
@@ -59,15 +59,12 @@ class App:
                                           anchor=tk.NW)
         
         # Button to apply filter and update output image
-        f = PolarizeFilter()
         apply_filter_button = tk.Button(text="Apply", bg="white",
-                                        command=lambda:self.apply(self.filter_dict[self.filter_in_use.get()]))
+                                        command=lambda:self.apply(filters.filter_dict[self.filter_in_use.get()]))
         apply_filter_button.grid(row=1, column=1)
         
         # Drop down for filter selection
-        self.filter_dict = {"polar": PolarizeFilter(),
-                            "whiten": WhitenFilter()}
-        self.filter_name_list = sorted(list(self.filter_dict.keys()))
+        self.filter_name_list = sorted(list(filters.filter_dict.keys()))
         self.filter_in_use = tk.StringVar(self.window)
         self.filter_in_use.set(self.filter_name_list[0]) # default value
         dd = tk.OptionMenu(self.window, self.filter_in_use,

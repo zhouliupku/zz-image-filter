@@ -45,3 +45,8 @@ class PolarizeFilter(PointFilter):
     def apply_pointwise(self, x):
         return int(round(MID * (1 + safe_pow(x / MID - 1, 0.5)), 0))
     
+    
+class WhitenFilter(PointFilter):
+    def apply_pointwise(self, x):
+        return x + 77
+    

@@ -23,7 +23,7 @@ class LocalFilter(ImageFilter):
         """
         Apply kernel on the image and clip the value within 0 and 255
         """
-        return np.clip(cvv(image, self.kernel, mode="same"), 0, 255)
+        return np.clip(cvv(image, self.kernel, mode="full"), 0, 255)
         
         
 class AverageBlurFilter(LocalFilter):

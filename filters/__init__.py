@@ -9,4 +9,5 @@ from . import point_filters, local_filters
 
 filter_dict = {"polar": point_filters.PolarizeFilter(),
                "whiten": point_filters.WhitenFilter(),
+               "normalize": point_filters.NormalizeFilter(),
                "blur": local_filters.AverageBlurFilter()}

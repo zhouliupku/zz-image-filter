@@ -10,7 +10,8 @@ import cv2
 import os
 from PIL import Image, ImageTk
 
-from .common import config
+from .common.config import AppFontConfig as AFC
+from .common.config import AppGridConfig as AGC
 from . import filters
 
 class App:
@@ -18,32 +19,44 @@ class App:
         """
         Initialize app window and start main loop
         """
-        #TODO: put into config
         root_path = os.path.dirname(os.path.abspath(__file__))
         img_path = os.path.join(root_path, "resources", "image")
         
         # Initialize app window
         self.window = window
         self.window.title(window_title)
-        self.window.geometry("600x350")
+        self.window.geometry(AGC.WINDOW_SIZE)
+        for col in [AGC.COL_ORIG_CONTENT, AGC.COL_OUT_CONTENT]:
+            self.window.grid_columnconfigure(col, minsize=AGC.DROPDOWN_WIDTH)
+        for col in [AGC.COL_ORIG_BUTTON, AGC.COL_OUT_BUTTON]:
+            self.window.grid_columnconfigure(col, minsize=AGC.BUTTON_WIDTH)
         self.window.wm_iconbitmap(os.path.join(img_path, "zz.ico"))
         
-        # Title object
-        title = tk.Label(text="Filter Project", font=config.TITLE_FONT)
-        title.grid(row=0, column=0, columnspan=3)
+        # Title and subtitle
+        title = tk.Label(text="Filter Project", font=AFC.TITLE_FONT)
+        title.grid(row=AGC.ROW_TITLE,
+                   column=AGC.COL_LEFTMOST,
+                   columnspan=AGC.ALL_COLUMNS)
+        subtitle = tk.Label(text="Designed by zz", font=AFC.SUBTITLE_FONT)
+        subtitle.grid(row=AGC.ROW_SUBTITLE,
+                      column=AGC.COL_LEFTMOST,
+                      columnspan=AGC.ALL_COLUMNS)
 
         # Load original image
         #TODO: add load functionality
         filename = "pku.jpg"
         self.orig_img = cv2.imread(os.path.join(img_path, "orig", filename),
-                              cv2.IMREAD_GRAYSCALE)
+                                   cv2.IMREAD_GRAYSCALE)
         self.out_img = self.orig_img
         print(self.orig_img)
         
         # Show original image
+        #TODO: support resizing
         height, width = self.orig_img.shape
         self.orig_canvas = tk.Canvas(window, width=width, height=height)
-        self.orig_canvas.grid(row=1, column=0)
+        self.orig_canvas.grid(row=AGC.ROW_IMAGE,
+                              column=AGC.COL_ORIG_CONTENT,
+                              columnspan=AGC.HALF_COLUMNS)
         self.orig_photo = ImageTk.PhotoImage(master=self.orig_canvas,
                                              image=Image.fromarray(self.orig_img))
         self.orig_canvas.create_image(0, 0, 
@@ -52,30 +65,39 @@ class App:
         
         # Show output image, initialized as a copy of original image
         self.out_canvas = tk.Canvas(window, width=width, height=height)
-        self.out_canvas.grid(row=1, column=2)
+        self.out_canvas.grid(row=AGC.ROW_IMAGE,
+                             column=AGC.COL_OUT_CONTENT,
+                             columnspan=AGC.HALF_COLUMNS)
         self.out_photo = ImageTk.PhotoImage(master=self.out_canvas,
                                             image=Image.fromarray(self.out_img))
         self.out_img_on_canvas = self.out_canvas.create_image(0, 0, 
                                           image=self.out_photo,
                                           anchor=tk.NW)
         
-        # Button to apply filter and update output image
-        apply_filter_button = tk.Button(text="Apply", bg="white",
-                                        command=lambda:self.apply(filters.filter_dict[self.filter_in_use.get()]))
-        apply_filter_button.grid(row=1, column=1)
+        # Loading and saving
+        load_button = tk.Button(text="Load", bg="white")
+#                                command=lambda:self.save(self.out_img, filename))
+        load_button.grid(row=AGC.ROW_MENU_1,
+                         column=AGC.COL_ORIG_BUTTON)
+        save_button = tk.Button(text="Save", bg="white",
+                                command=lambda:self.save(self.out_img, filename))
+        save_button.grid(row=AGC.ROW_MENU_2,
+                         column=AGC.COL_ORIG_BUTTON)
         
-        # Drop down for filter selection
+        # Filter selection and apply
         self.filter_name_list = sorted(list(filters.filter_dict.keys()))
         self.filter_in_use = tk.StringVar(self.window)
         self.filter_in_use.set(self.filter_name_list[0]) # default value
-        dd = tk.OptionMenu(self.window, self.filter_in_use,
-                           *(self.filter_name_list))
-        dd.grid(row=2, column=0, columnspan=3)
-        
-        # Saving
-        save_button = tk.Button(text="Save", bg="white",
-                                command=lambda:self.save(self.out_img, filename))
-        save_button.grid(row=3, column=0, columnspan=3)
+        dropdown_filter = tk.OptionMenu(self.window, self.filter_in_use,
+                                        *(self.filter_name_list))
+#        dropdown_filter.config(width=20)
+        dropdown_filter.grid(row=AGC.ROW_MENU_1,
+                             column=AGC.COL_OUT_CONTENT,
+                             sticky="ew")
+        apply_filter_button = tk.Button(text="Apply", bg="white",
+                                        command=lambda:self.apply(filters.filter_dict[self.filter_in_use.get()]))
+        apply_filter_button.grid(row=AGC.ROW_MENU_1,
+                                 column=AGC.COL_OUT_BUTTON)
         
         # Start main loop
         self.window.mainloop()
@@ -114,7 +136,9 @@ class App:
         """
         save_message = "Image has been saved to {}".format(filename)
         save_display = tk.Text(master=self.window, height=3, width=50)
-        save_display.grid(row=4, column=0, columnspan=3)
+        save_display.grid(row=AGC.ROW_NOTICE,
+                          column=AGC.COL_LEFTMOST,
+                          columnspan=AGC.ALL_COLUMNS)
         save_display.insert(tk.END, save_message)
         
         

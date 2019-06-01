@@ -34,7 +34,8 @@ class App:
 
         # Load original image
         #TODO: add load functionality
-        self.orig_img = cv2.imread(os.path.join(img_path, "orig", "pku.jpg"),
+        filename = "pku.jpg"
+        self.orig_img = cv2.imread(os.path.join(img_path, "orig", filename),
                               cv2.IMREAD_GRAYSCALE)
         self.out_img = self.orig_img
         print(self.orig_img)
@@ -73,7 +74,7 @@ class App:
         
         # Saving
         save_button = tk.Button(text="Save", bg="white",
-                                command=lambda:self.save(self.out_img))
+                                command=lambda:self.save(self.out_img, filename))
         save_button.grid(row=3, column=0, columnspan=3)
         
         # Start main loop
@@ -93,13 +94,13 @@ class App:
         self.out_canvas.itemconfig(self.out_img_on_canvas, image = self.out_photo)
         
         
-    def save(self, img):
+    def save(self, img, orig_filename):
         """
         img: image to be saved, represented as numpy array
+        orig_filename: iroginal filename
         Save image to specific path (currently static defined)
         """
-        #TODO: generalize filename generation
-        filename = "test.png"
+        filename = "modified_" + orig_filename
         root_path = os.path.dirname(os.path.abspath(__file__))
         save_path = os.path.join(root_path, "resources", "image", "out")
         cv2.imwrite(os.path.join(save_path, filename), img)

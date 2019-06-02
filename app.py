@@ -6,6 +6,8 @@ Created on Sun May 12 15:19:11 2019
 """
 
 import tkinter as tk
+from tkinter import filedialog as FD
+from tkinter import messagebox as MSG
 import cv2
 import os
 from PIL import Image, ImageTk
@@ -43,44 +45,53 @@ class App:
                       columnspan=AGC.ALL_COLUMNS)
 
         # Load original image
-        #TODO: add load functionality
-        filename = "pku.jpg"
-        self.orig_img = cv2.imread(os.path.join(img_path, "orig", filename),
+        self.input_filename = os.path.join(img_path, "orig", "pku.jpg")
+        self.orig_img = cv2.imread(self.input_filename,
                                    cv2.IMREAD_GRAYSCALE)
         self.out_img = self.orig_img
         print(self.orig_img)
         
         # Show original image
-        #TODO: support resizing
-        height, width = self.orig_img.shape
-        self.orig_canvas = tk.Canvas(window, width=width, height=height)
+        self.orig_canvas = tk.Canvas(window,
+                                     width=AGC.IMAGE_WIDTH,
+                                     height=AGC.IMAGE_HEIGHT)
         self.orig_canvas.grid(row=AGC.ROW_IMAGE,
                               column=AGC.COL_ORIG_CONTENT,
                               columnspan=AGC.HALF_COLUMNS)
         self.orig_photo = ImageTk.PhotoImage(master=self.orig_canvas,
-                                             image=Image.fromarray(self.orig_img))
+                                             image=Image.fromarray(self.orig_img).resize((AGC.IMAGE_WIDTH,
+                                                                 AGC.IMAGE_HEIGHT)))
         self.orig_canvas.create_image(0, 0, 
                                       image=self.orig_photo,
                                       anchor=tk.NW)
         
         # Show output image, initialized as a copy of original image
-        self.out_canvas = tk.Canvas(window, width=width, height=height)
+        self.out_canvas = tk.Canvas(window,
+                                    width=AGC.IMAGE_WIDTH,
+                                    height=AGC.IMAGE_HEIGHT)
         self.out_canvas.grid(row=AGC.ROW_IMAGE,
                              column=AGC.COL_OUT_CONTENT,
                              columnspan=AGC.HALF_COLUMNS)
         self.out_photo = ImageTk.PhotoImage(master=self.out_canvas,
-                                            image=Image.fromarray(self.out_img))
+                                            image=Image.fromarray(self.out_img).resize((AGC.IMAGE_WIDTH,
+                                                                 AGC.IMAGE_HEIGHT)))
         self.out_img_on_canvas = self.out_canvas.create_image(0, 0, 
                                           image=self.out_photo,
                                           anchor=tk.NW)
         
         # Loading and saving
-        load_button = tk.Button(text="Load", bg="white")
-#                                command=lambda:self.save(self.out_img, filename))
+        self.load_label = tk.Label(text=self.input_filename, font=AFC.TEXT_FONT)
+        self.load_label.grid(row=AGC.ROW_MENU_1,
+                             column=AGC.COL_LEFTMOST)
+        load_button = tk.Button(text="Load", bg="white",
+                                command=lambda:self.load())
         load_button.grid(row=AGC.ROW_MENU_1,
                          column=AGC.COL_ORIG_BUTTON)
+        self.save_label = tk.Label(text="", font=AFC.TEXT_FONT)
+        self.save_label.grid(row=AGC.ROW_MENU_2,
+                             column=AGC.COL_LEFTMOST)
         save_button = tk.Button(text="Save", bg="white",
-                                command=lambda:self.save(self.out_img, filename))
+                                command=lambda:self.save(self.out_img))
         save_button.grid(row=AGC.ROW_MENU_2,
                          column=AGC.COL_ORIG_BUTTON)
         
@@ -90,7 +101,6 @@ class App:
         self.filter_in_use.set(self.filter_name_list[0]) # default value
         dropdown_filter = tk.OptionMenu(self.window, self.filter_in_use,
                                         *(self.filter_name_list))
-#        dropdown_filter.config(width=20)
         dropdown_filter.grid(row=AGC.ROW_MENU_1,
                              column=AGC.COL_OUT_CONTENT,
                              sticky="ew")
@@ -112,34 +122,40 @@ class App:
         self.out_img = img_filter.apply(self.orig_img)
         print(self.out_img)
         self.out_photo = ImageTk.PhotoImage(master=self.out_canvas,
-                                            image=Image.fromarray(self.out_img))
+                                            image=Image.fromarray(self.out_img).resize((AGC.IMAGE_WIDTH,
+                                                                 AGC.IMAGE_HEIGHT)))
         self.out_canvas.itemconfig(self.out_img_on_canvas, image = self.out_photo)
+        self.save_label.config(text="Changes are not saved yet!")
         
         
-    def save(self, img, orig_filename):
+    def load(self):
+        """
+        Load from customized path and set self.input_filename
+        """
+        self.input_filename = FD.askopenfilename(initialdir = "/",
+                                                 title = "Load",
+                                                 filetypes = (("jpeg files","*.jpg"),
+                                                              ("png files","*.png"),
+                                                              ("all files","*.*")))
+        self.load_label.config(text=self.input_filename)
+        
+    
+    def save(self, img):
         """
         img: image to be saved, represented as numpy array
-        orig_filename: iroginal filename
-        Save image to specific path (currently static defined)
+        Save image to specific path 
         """
-        filename = "modified_" + orig_filename
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        save_path = os.path.join(root_path, "resources", "image", "out")
-        cv2.imwrite(os.path.join(save_path, filename), img)
-        self.after_save(os.path.join(save_path, filename))
-        
-        
-    def after_save(self, filename):
-        """
-        filename: path + filename
-        Display message after saving image
-        """
-        save_message = "Image has been saved to {}".format(filename)
-        save_display = tk.Text(master=self.window, height=3, width=50)
-        save_display.grid(row=AGC.ROW_NOTICE,
-                          column=AGC.COL_LEFTMOST,
-                          columnspan=AGC.ALL_COLUMNS)
-        save_display.insert(tk.END, save_message)
+        filename =  FD.asksaveasfilename(initialdir = "/",
+                                         title = "Save",
+                                         defaultextension=".png",
+                                         filetypes = (("jpeg files","*.jpg"),
+                                                      ("png files","*.png"),
+                                                      ("all files","*.*")))
+        try:
+            cv2.imwrite(filename, img)
+            self.save_label.config(text=filename)
+        except:
+            MSG.showwarning("Save", "Failed to save changes to {}".format(filename))
         
         
 def run():

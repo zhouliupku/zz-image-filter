@@ -15,9 +15,11 @@ class AppGridConfig(object):
     """
     For GUI grids only
     """
-    WINDOW_SIZE = "1000x600"
+    WINDOW_SIZE = "1000x550"
     DROPDOWN_WIDTH = 420
     BUTTON_WIDTH = 80
+    IMAGE_WIDTH = DROPDOWN_WIDTH + BUTTON_WIDTH - 5
+    IMAGE_HEIGHT = 350
     
     ROW_TITLE = 0
     ROW_SUBTITLE = 1

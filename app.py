@@ -22,7 +22,7 @@ class App:
         Initialize app window and start main loop
         """
         root_path = os.path.dirname(os.path.abspath(__file__))
-        img_path = os.path.join(root_path, "resources", "image")
+        self.img_path = os.path.join(root_path, "resources", "image")
         
         # Initialize app window
         self.window = window
@@ -32,7 +32,7 @@ class App:
             self.window.grid_columnconfigure(col, minsize=AGC.DROPDOWN_WIDTH)
         for col in [AGC.COL_ORIG_BUTTON, AGC.COL_OUT_BUTTON]:
             self.window.grid_columnconfigure(col, minsize=AGC.BUTTON_WIDTH)
-        self.window.wm_iconbitmap(os.path.join(img_path, "zz.ico"))
+        self.window.wm_iconbitmap(os.path.join(self.img_path, "zz.ico"))
         
         # Title and subtitle
         title = tk.Label(text="Filter Project", font=AFC.TITLE_FONT)
@@ -44,10 +44,10 @@ class App:
                       column=AGC.COL_LEFTMOST,
                       columnspan=AGC.ALL_COLUMNS)
 
-        # Load original image
-        self.input_filename = os.path.join(img_path, "orig", "pku.jpg")
-        self.orig_img = cv2.imread(self.input_filename,
-                                   cv2.IMREAD_GRAYSCALE)
+        # Load default original image to start with
+        default_image = os.path.join(self.img_path, "orig", "pku.jpg")
+        self.input_filename = default_image
+        self.orig_img = cv2.imread(self.input_filename, cv2.IMREAD_GRAYSCALE)
         self.out_img = self.orig_img
         print(self.orig_img)
         
@@ -61,7 +61,7 @@ class App:
         self.orig_photo = ImageTk.PhotoImage(master=self.orig_canvas,
                                              image=Image.fromarray(self.orig_img).resize((AGC.IMAGE_WIDTH,
                                                                  AGC.IMAGE_HEIGHT)))
-        self.orig_canvas.create_image(0, 0, 
+        self.orig_img_on_canvas = self.orig_canvas.create_image(0, 0, 
                                       image=self.orig_photo,
                                       anchor=tk.NW)
         
@@ -120,11 +120,7 @@ class App:
         """
         #TODO: ensure value between 0 and 255
         self.out_img = img_filter.apply(self.orig_img)
-        print(self.out_img)
-        self.out_photo = ImageTk.PhotoImage(master=self.out_canvas,
-                                            image=Image.fromarray(self.out_img).resize((AGC.IMAGE_WIDTH,
-                                                                 AGC.IMAGE_HEIGHT)))
-        self.out_canvas.itemconfig(self.out_img_on_canvas, image = self.out_photo)
+        self.update_all_image()
         self.save_label.config(text="Changes are not saved yet!")
         
         
@@ -132,30 +128,47 @@ class App:
         """
         Load from customized path and set self.input_filename
         """
-        self.input_filename = FD.askopenfilename(initialdir = "/",
-                                                 title = "Load",
-                                                 filetypes = (("jpeg files","*.jpg"),
+        self.input_filename = FD.askopenfilename(initialdir=os.path.join(self.img_path, "orig"),
+                                                 title="Load",
+                                                 filetypes=(("jpeg files","*.jpg"),
                                                               ("png files","*.png"),
                                                               ("all files","*.*")))
         self.load_label.config(text=self.input_filename)
+        self.orig_img = cv2.imread(self.input_filename, cv2.IMREAD_GRAYSCALE)
+        self.out_img = self.orig_img
+        self.update_all_image()
         
     
-    def save(self, img):
+    def save(self, image):
         """
         img: image to be saved, represented as numpy array
         Save image to specific path 
         """
-        filename =  FD.asksaveasfilename(initialdir = "/",
-                                         title = "Save",
+        filename =  FD.asksaveasfilename(initialdir=os.path.join(self.img_path, "out"),
+                                         title="Save",
                                          defaultextension=".png",
-                                         filetypes = (("jpeg files","*.jpg"),
+                                         filetypes=(("jpeg files","*.jpg"),
                                                       ("png files","*.png"),
                                                       ("all files","*.*")))
         try:
-            cv2.imwrite(filename, img)
+            cv2.imwrite(filename, image)
             self.save_label.config(text=filename)
         except:
             MSG.showwarning("Save", "Failed to save changes to {}".format(filename))
+            
+            
+    def update_all_image(self):
+        """
+        Update image for both input and output canvas
+        """
+        self.orig_photo = ImageTk.PhotoImage(master=self.orig_canvas,
+                                            image=Image.fromarray(self.orig_img).resize((AGC.IMAGE_WIDTH,
+                                                                 AGC.IMAGE_HEIGHT)))
+        self.orig_canvas.itemconfig(self.orig_img_on_canvas, image = self.orig_photo)
+        self.out_photo = ImageTk.PhotoImage(master=self.out_canvas,
+                                            image=Image.fromarray(self.out_img).resize((AGC.IMAGE_WIDTH,
+                                                                 AGC.IMAGE_HEIGHT)))
+        self.out_canvas.itemconfig(self.out_img_on_canvas, image = self.out_photo)
         
         
 def run():

@@ -128,11 +128,14 @@ class App:
         """
         Load from customized path and set self.input_filename
         """
-        self.input_filename = FD.askopenfilename(initialdir=os.path.join(self.img_path, "orig"),
-                                                 title="Load",
-                                                 filetypes=(("jpeg files","*.jpg"),
-                                                              ("png files","*.png"),
-                                                              ("all files","*.*")))
+        filename = FD.askopenfilename(initialdir=os.path.join(self.img_path, "orig"),
+                                     title="Load",
+                                     filetypes=(("jpeg files","*.jpg"),
+                                                  ("png files","*.png"),
+                                                  ("all files","*.*")))
+        if filename == "":      # on cancel
+            return
+        self.input_filename = filename
         self.load_label.config(text=self.input_filename)
         self.orig_img = cv2.imread(self.input_filename, cv2.IMREAD_GRAYSCALE)
         self.out_img = self.orig_img
@@ -150,6 +153,8 @@ class App:
                                          filetypes=(("jpeg files","*.jpg"),
                                                       ("png files","*.png"),
                                                       ("all files","*.*")))
+        if filename == "":      # on cancel
+            return
         try:
             cv2.imwrite(filename, image)
             self.save_label.config(text=filename)
